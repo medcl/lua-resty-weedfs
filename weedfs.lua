@@ -76,7 +76,7 @@ end
 
 function process_img(file_volumn,file_id,file_size,file_url)
     local image_sizes = { "100x100", "80x80", "800x600", "40x40" };
-    local local_file_root ="images" .. ngx.var.local_img_fs_root;
+    local local_file_root =  ngx.var.local_img_fs_root .."images/";
     local local_file_in_folder = local_file_root .."orig/".. file_volumn .."/";
     local local_file_in_path = local_file_in_folder.. file_id ..".jpg";
 
@@ -108,7 +108,7 @@ end
 function process_audio(file_volumn,file_id,file_size,file_url)
 
     local audio_sizes = { "mp3" };
-    local local_file_root ="audios/" .. ngx.var.local_audio_fs_root;
+    local local_file_root = ngx.var.local_audio_fs_root .."audios/";
     local local_file_in_folder = local_file_root .."orig/".. file_volumn .."/";
     local local_file_in_path = local_file_in_folder.. file_id ..".mp3";
 
