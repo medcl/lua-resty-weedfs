@@ -13,6 +13,12 @@ function file_exists(name)
     if f~=nil then io.close(f) return true else return false end
 end
 
+function exit_with_code(code)
+    ngx.say(code)
+--    ngx.exit(code)
+    return
+end
+
 function req_orig_file(file_url)
     local http = require"resty.http"
     local hc = http:new()
@@ -22,13 +28,13 @@ function req_orig_file(file_url)
     }
 
     if code ~= 200 then
-        ngx.exit(404)
+       return exit_with_code(404)
     else
         if body == nil then
-            ngx.exit(404)
+            return exit_with_code(404)
         else
             if (body..'a') == 'a' then
-                ngx.exit(404)
+                return exit_with_code(404)
             else
                 ngx.say(body)
                 ngx.flush(true)
@@ -37,6 +43,7 @@ function req_orig_file(file_url)
         end
     end
 end
+
 
 function save_orig_file(file_url,local_file_folder,local_file_path)
     local http = require"resty.http"
@@ -47,22 +54,22 @@ function save_orig_file(file_url,local_file_folder,local_file_path)
     }
 
     if code ~= 200 then
-        ngx.exit(404)
+        return exit_with_code(404)
     else
         if body == nil then
-            ngx.exit(404)
+            return exit_with_code(404)
         else
             if (body..'a') == 'a' then
-                ngx.exit(404)
+                return exit_with_code(404)
             else
-                local mkdir_command ="mkdir "..local_file_folder.." -p"
+                local mkdir_command ="mkdir "..local_file_folder.." -p >/dev/null"
                 os.execute(mkdir_command)
                 file = io.open(local_file_path, "w");
                 if (file) then
                     file:write(body);
                     file:close();
                 else
-                    ngx.exit(500)
+                    return exit_with_code(500)
                 end
             end
         end
@@ -92,8 +99,8 @@ function process_img(file_volumn,file_id,file_size,file_url)
         end
 
         if(file_exists(local_file_in_path))then
-            local mkdir_command ="mkdir "..local_file_out_folder.." -p"
-            local convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path;
+            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null"
+            local convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null";
             os.execute(mkdir_command)
             os.execute(convert_command)
             if(file_exists(local_file_out_path))then
@@ -101,7 +108,7 @@ function process_img(file_volumn,file_id,file_size,file_url)
             end
         end
     else
-        ngx.exit(404)
+        return exit_with_code(404)
     end
 end
 
@@ -123,8 +130,8 @@ function process_audio(file_volumn,file_id,file_size,file_url)
         end
 
         if(file_exists(local_file_in_path))then
-            local mkdir_command ="mkdir "..local_file_out_folder.." -p"
-            local convert_command = "ffmpeg -i " .. local_file_in_path .. " -ab 64 " .. local_file_out_path;
+            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null"
+            local convert_command = "ffmpeg -i " .. local_file_in_path .. " -ab 64 " .. local_file_out_path .. ">/dev/null";
             os.execute(mkdir_command)
             os.execute(convert_command)
             if(file_exists(local_file_out_path))then
@@ -132,7 +139,7 @@ function process_audio(file_volumn,file_id,file_size,file_url)
             end
         end
     else
-        ngx.exit(404)
+        return exit_with_code(404)
     end
 end
 
@@ -143,7 +150,7 @@ local process_type = ngx.var.arg_type or "na";
 local file_size = ngx.var.arg_size or "na";
 
 if ngx.var.arg_size == nil or ngx.var.arg_volumn == nil or ngx.var.arg_id == nil then
-    ngx.exit(400)
+    return exit_with_code(400)
 elseif ngx.var.arg_size == "orig" then
     req_orig_file(file_url)
 end
