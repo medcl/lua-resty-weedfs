@@ -14,8 +14,8 @@ function file_exists(name)
 end
 
 function exit_with_code(code)
-    ngx.say(code)
---    ngx.exit(code)
+--    ngx.say(code)
+    ngx.exit(code)
     return
 end
 
@@ -38,6 +38,7 @@ function req_orig_file(file_url)
             else
                 ngx.say(body)
                 ngx.flush(true)
+				exit_with_code(200)
                 return
             end
         end
@@ -62,7 +63,7 @@ function save_orig_file(file_url,local_file_folder,local_file_path)
             if (body..'a') == 'a' then
                 return exit_with_code(404)
             else
-                local mkdir_command ="mkdir "..local_file_folder.." -p >/dev/null"
+                local mkdir_command ="mkdir "..local_file_folder.." -p >/dev/null 2>&1 "
                 os.execute(mkdir_command)
                 file = io.open(local_file_path, "w");
                 if (file) then
@@ -82,7 +83,7 @@ end
 
 
 function process_img(file_volumn,file_id,file_size,file_url)
-    local image_sizes = { "100x100", "80x80", "800x600", "40x40" };
+    local image_sizes = { "100x100", "80x80", "800x600", "40x40" ,"480x320","320x210","640x420"};
     local local_file_root =  ngx.var.local_img_fs_root .."images/";
     local local_file_in_folder = local_file_root .."orig/".. file_volumn .."/";
     local local_file_in_path = local_file_in_folder.. file_id ..".jpg";
@@ -99,12 +100,21 @@ function process_img(file_volumn,file_id,file_size,file_url)
         end
 
         if(file_exists(local_file_in_path))then
-            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null"
-            local convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null";
+            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null 2>&1 "
+            local convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
             os.execute(mkdir_command)
             os.execute(convert_command)
             if(file_exists(local_file_out_path))then
-                ngx.redirect(local_file_out_rel_path)
+--                ngx.redirect(local_file_out_rel_path)
+               local file = io.open(local_file_out_path, "r");
+                if (file) then
+                    local content= file:read("*a");
+                    file:close();
+                    ngx.say(content)
+                    ngx.flush(true)
+                else
+                    return exit_with_code(500)
+                end
             end
         end
     else
@@ -130,12 +140,21 @@ function process_audio(file_volumn,file_id,file_size,file_url)
         end
 
         if(file_exists(local_file_in_path))then
-            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null"
-            local convert_command = "ffmpeg -i " .. local_file_in_path .. " -ab 64 " .. local_file_out_path .. ">/dev/null";
+            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null 2>&1 "
+            local convert_command = "ffmpeg -i " .. local_file_in_path .. " -ab 64 " .. local_file_out_path .. " >/dev/null 2>&1 ";
             os.execute(mkdir_command)
             os.execute(convert_command)
             if(file_exists(local_file_out_path))then
-                ngx.redirect(local_file_out_rel_path)
+--                ngx.redirect(local_file_out_rel_path)
+                local file = io.open(local_file_out_path, "r");
+                if (file) then
+                    local content= file:read("*a");
+                    file:close();
+                    ngx.say(content)
+                    ngx.flush(true)
+                else
+                    return exit_with_code(500)
+                end
             end
         end
     else
