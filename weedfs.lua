@@ -83,7 +83,8 @@ end
 
 
 function process_img(file_volumn,file_id,file_size,file_url)
-    local image_sizes = { "100x100", "80x80", "800x600", "40x40" ,"480x320","320x210","640x420"};
+    local image_sizes =     { "100x100", "80x80", "800x600", "40x40" ,"480x320","320x210","640x420","160x160","800x400"};
+    local scale_image_sizes = { "100x100s", "80x80s", "800x600s", "40x40s" ,"480x320s","320x210s","640x420s","160x160s","800x400s"};
     local local_file_root =  ngx.var.local_img_fs_root .."images/";
     local local_file_in_folder = local_file_root .."orig/".. file_volumn .."/";
     local local_file_in_path = local_file_in_folder.. file_id ..".jpg";
@@ -92,34 +93,37 @@ function process_img(file_volumn,file_id,file_size,file_url)
     local local_file_out_path = local_file_out_folder.. file_id ..".jpg";
     local local_file_out_rel_path = "/images/".. file_size .."/" .. file_volumn .."/".. file_id ..".jpg";
 
+    local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null 2>&1 "
+    local convert_command;
 
     if table.contains(image_sizes, file_size) then
-
+        convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
         if(not file_exists(local_file_in_path))then
             save_orig_file(file_url,local_file_in_folder,local_file_in_path)
         end
 
-        if(file_exists(local_file_in_path))then
-            local mkdir_command ="mkdir "..local_file_out_folder.." -p >/dev/null 2>&1 "
-            local convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
-            os.execute(mkdir_command)
-            os.execute(convert_command)
-            if(file_exists(local_file_out_path))then
---                ngx.redirect(local_file_out_rel_path)
-               local file = io.open(local_file_out_path, "r");
-                if (file) then
-                    local content= file:read("*a");
-                    file:close();
-                    ngx.say(content)
-                    ngx.flush(true)
-                else
-                    return exit_with_code(500)
-                end
-            end
-        end
+    elseif (table.contains(scale_image_sizes, file_size)) then
+        file_size=string.sub(file_size, 1, -2)
+        convert_command = "gm convert " .. local_file_in_path .. " -thumbnail '" .. file_size .. "'  -quality 50 -background gray   -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
     else
         return exit_with_code(404)
     end
+
+    os.execute(mkdir_command)
+    os.execute(convert_command)
+    if(file_exists(local_file_out_path))then
+        --                ngx.redirect(local_file_out_rel_path)
+        local file = io.open(local_file_out_path, "r");
+        if (file) then
+            local content= file:read("*a");
+            file:close();
+            ngx.say(content)
+            ngx.flush(true)
+        else
+            return exit_with_code(500)
+        end
+    end
+
 end
 
 function process_audio(file_volumn,file_id,file_size,file_url)
