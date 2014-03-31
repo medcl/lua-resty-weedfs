@@ -27,6 +27,20 @@ function req_orig_file(file_url)
         timeout = 3000,
     }
 
+    ngx.log(ngx.NOTICE,'req:'..file_url)
+    ngx.log(ngx.NOTICE,'code:'..code)
+    if code == 301 then
+    --   ngx.log(ngx.ERR,'hit 301,redirect')
+    --   ngx.log(ngx.ERR,'hit 301,body'.. body)
+    --   ngx.log(ngx.ERR,string.match(body,'"(.+)"'))
+       file_url = string.match(body,'"(.+)"')
+       ok, code, headers, status, body = hc:request{
+        url = file_url,
+        timeout = 3000,
+       }
+    --ngx.log(ngx.NOTICE,'code:'..code)
+    end
+
     if code ~= 200 then
        return exit_with_code(404)
     else
@@ -38,7 +52,7 @@ function req_orig_file(file_url)
             else
                 ngx.say(body)
                 ngx.flush(true)
-				exit_with_code(200)
+		exit_with_code(200)
                 return
             end
         end
@@ -47,12 +61,24 @@ end
 
 
 function save_orig_file(file_url,local_file_folder,local_file_path)
+    ngx.log(ngx.NOTICE,'start save orig file')
     local http = require"resty.http"
     local hc = http:new()
     local ok, code, headers, status, body = hc:request{
         url = file_url,
         timeout = 3000,
     }
+
+    ngx.log(ngx.NOTICE,'get result:'..code..','..body)
+
+    ngx.log(ngx.NOTICE,'req:'..file_url)
+    if code == 301 then
+       file_url = string.match(body,'"(.+)"')
+       ok, code, headers, status, body = hc:request{
+        url = file_url,
+        timeout = 3000,
+      } 
+    end
 
     if code ~= 200 then
         return exit_with_code(404)
@@ -83,8 +109,9 @@ end
 
 
 function process_img(file_volumn,file_id,file_size,file_url)
-    local image_sizes =     { "100x100", "80x80", "800x600", "40x40" ,"480x320","320x210","640x420","160x160","800x400","200x200"};
-    local scale_image_sizes = { "100x100s", "80x80s", "800x600s", "40x40s" ,"480x320s","320x210s","640x420s","160x160s","800x400s","200x200s"};
+    ngx.log(ngx.NOTICE,'start process img')
+    local image_sizes =     { "100x100", "80x80", "800x600", "40x40" ,"480x320","360x200","320x210","640x420","160x160","800x400","200x200"};
+    local scale_image_sizes = { "100x100s", "80x80s", "800x600s", "40x40s" ,"480x320s","360x200s","320x210s","640x420s","160x160s","800x400s","200x200s"};
     local local_file_root =  ngx.var.local_img_fs_root .."images/";
     local local_file_in_folder = local_file_root .."orig/".. file_volumn .."/";
     local local_file_in_path = local_file_in_folder.. file_id ..".jpg";
@@ -99,12 +126,13 @@ function process_img(file_volumn,file_id,file_size,file_url)
 	--return if has a local copy
     if(file_exists(local_file_out_path))then        
         local file = io.open(local_file_out_path, "r");
+        ngx.log(ngx.NOTICE,'hit local file:'..local_file_out_path)
         if (file) then
             local content= file:read("*a");
             file:close();
             ngx.say(content)
             ngx.flush(true)
-			return      
+            return      
         end
     end	
 
@@ -112,20 +140,27 @@ function process_img(file_volumn,file_id,file_size,file_url)
 	if file_size == "orig" then
 		return req_orig_file(file_url)
 	end
-	
+
+    ngx.log(ngx.NOTICE,'start check image type,'..file_size)	
     if table.contains(scale_image_sizes, file_size) then
+        ngx.log(ngx.NOTICE,'hit img size')
         file_size=string.sub(file_size, 1, -2)
         convert_command = "gm convert " .. local_file_in_path .. " -thumbnail '" .. file_size .. "'  -quality 50 -background gray   -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
     elseif (table.contains(image_sizes, file_size)) then
+        ngx.log(ngx.NOTICE,'hit img size2')
         convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
     else
+        ngx.log(ngx.NOTICE,'not hit image type,return 404')
         return exit_with_code(404)
     end
     --ngx.say('enter')
 	if(not file_exists(local_file_in_path))then
+                ngx.log(ngx.NOTICE,'save file:'..local_file_in_path)
 		save_orig_file(file_url,local_file_in_folder,local_file_in_path)
 	end
 	
+    ngx.log(ngx.NOTICE,'cmd'..mkdir_command)
+    ngx.log(ngx.NOTICE,'cmd'..convert_command)
     os.execute(mkdir_command)
     os.execute(convert_command)
 	
