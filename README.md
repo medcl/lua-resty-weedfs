@@ -9,11 +9,11 @@ weefs,lua,nginx and file post processing with ffmpeg and graphicsmagick
 `
 ./weed master  -ip="0.0.0.0" -defaultReplication="001" -mdir="." &
 
-./weed volume -max=100 -mserver="localhost:9333" -dir="./data/v1" -port=8083  -ip="119.254.112.171" -dataCenter="dc1" -rack="rack1" &
+./weed volume -max=100 -mserver="localhost:9333" -dir="./data/v1" -port=8083  -ip="119.254.xx.xx" -dataCenter="dc1" -rack="rack1" &
 
-./weed volume -max=100 -mserver="localhost:9333" -dir="./data/v2" -port=8084  -ip="119.254.112.171" -dataCenter="dc1" -rack="rack1" &
+./weed volume -max=100 -mserver="localhost:9333" -dir="./data/v2" -port=8084  -ip="119.254.xx.xx" -dataCenter="dc1" -rack="rack1" &
 
-./weed volume -max=100 -mserver="localhost:9333" -dir="./data/v3" -port=8085  -ip="119.254.112.171" -dataCenter="dc1" -rack="rack1" &
+./weed volume -max=100 -mserver="localhost:9333" -dir="./data/v3" -port=8085  -ip="119.254.xx.xx" -dataCenter="dc1" -rack="rack1" &
 `
 
 
