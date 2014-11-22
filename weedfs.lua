@@ -132,9 +132,9 @@ function process_img(file_volumn,file_id,file_size,file_url)
 
     if table.contains(scale_image_sizes, file_size) then
         file_size=string.sub(file_size, 1, -2)
-        convert_command = "gm convert " .. local_file_in_path .. " -thumbnail '" .. file_size .. "'  -quality 50 -background gray   -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
-    elseif (table.contains(image_sizes, file_size)) then
-        convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 50  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
+        convert_command = "gm convert " .. local_file_in_path .. " -resize '" .. file_size .. "'  -quality 90  "  .. local_file_out_path .. ">/dev/null 2>&1 ";
+       elseif (table.contains(image_sizes, file_size)) then
+        convert_command = "gm convert " .. local_file_in_path .. " -thumbnail " .. file_size .. "^  -quality 90  -gravity center -extent " .. file_size .. " " .. local_file_out_path .. ">/dev/null 2>&1 ";
     else
         return exit_with_code(404)
     end
